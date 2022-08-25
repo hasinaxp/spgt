@@ -1,5 +1,5 @@
 #pragma once
-#include "sp_math.h"
+#include "sp_math.hpp"
 
 namespace sp {
 

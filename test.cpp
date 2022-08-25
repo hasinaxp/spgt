@@ -63,16 +63,21 @@ int main() {
 	cout << e << endl;
 #endif
 
-	mat<float, 2,2> m;
-	m[0][1] = 4.0;
-
-	mat<float, 2,2> m2 = {
-		0, 0,
-		1, 1
+	mat<float> m1 = {
+		{2.0f, 2.0f},
+		{3.0f, 3.0f}
 	};
-	mat<float,2,2> m3 = m + m2;
-	cout << m << endl;
+	mat<float> m2 = {
+		{2.0f, 2.0f},
+		{5.0f, 3.0f}
+	};
+	mat<float> m3 = m1 * m2;
+	cout << m1 << endl;
 	cout << m2 << endl;
+	cout << m3 << endl;
+	m3 = m3.map([](const float & f){return f * f; });
+	cout << m3 << endl;
+	m3 -= m1 * m2;
 	cout << m3 << endl;
 
 

@@ -29,6 +29,7 @@ constexpr f32 deg = 180.0 / pi;
 template<class>
 class buffer_iterator;
 
+//storage class , acts as vector and queue
 template<class T>
 class buffer
 {
@@ -109,14 +110,14 @@ public:
     	return data[index(i)];
     }
 
-		itr begin()
-		{
-			return itr(this, 0);
-		}
-		itr end()
-		{
-			return itr(this, len);
-		}
+	itr begin()
+	{
+		return itr(this, 0);
+	}
+	itr end()
+	{
+		return itr(this, len);
+	}
 
 
     T* array(u32 & n)
@@ -140,6 +141,36 @@ public:
     	len += il.size();
     	for(auto it = il.begin();it != il.end(); it++) data[index(i++)] = T(*it);
     }
+	void push_front(T t)
+    {
+    	check(len + 1);
+    	len++;
+    	if(off == 0) off = cap;
+    	off--;
+    	data[off] = t;
+
+    }
+    void push_front(initializer_list<T> il)
+    {
+    	u32 n = il.size();
+    	check(len + n);
+    	u32 i = (int)off - n;
+    	
+		off = cap + i;
+    	i = 0;
+    	len += n;
+    	for(auto it = il.begin();it != il.end(); it++) data[index(i++)] = T(*it);
+    }
+	void push_mid(u32 p, initializer_list<T> il)
+    {
+    	u32 n = il.size();
+    	check(len + n);
+       	
+       	for(u32 i = len -1; i >= p; i--) data[index(i+p+1)] = data[index(i)];
+       	len += n;
+       	u32 i = p;
+    	for(auto it = il.begin();it != il.end(); it++) data[index(i++)] = T(*it);
+    }
 	T pop()
 	{
 		if(len == 0) return T();
@@ -161,6 +192,14 @@ public:
 	void fill(T t)
 	{
 		for(u32 i = 0; i < len; i++) data[index(i)] = t;
+	}
+	buffer<T> splice(u32 b, u32 e)
+	{
+		if(b>=e) return buffer<T>();
+		buffer<T> bf(e-b);
+		u32 x = 0;
+		for(u32 i = b; i < e; i++) bf.data[x++] = data[index(i)];
+		return bf;
 	}
 	buffer<T> map(T (*func)(const T & t))
 	{
@@ -284,7 +323,7 @@ private:
 		return (i + off) % cap;
 	}
 
-};
+};//buffer
 
 
 template<typename buffer>
@@ -416,9 +455,7 @@ public:
     	return lhs.ind > rhs.ind;
     }
 
-
-
-};
+}; //buffer_iterator
 
 
 
@@ -444,9 +481,25 @@ ostream& operator<<(ostream& os, buffer<T> &b)
 	return os;
 }
 
+template<typename T>
+ostream& operator<<(ostream& os, buffer<T> b)
+{
+	if(b.len)
+	{
+		os << "[ ";
+		for(u32 i = 0; i < b.len - 1; i++)
+		{
+			os << b.at(i) << ", ";
+		}
+		os << b.at(b.len - 1) <<  " ]";
+	}
+	else
+	{
+			os << "[ ]";
+	}
 
-
-
+	return os;
+}
 
 
 typedef buffer<u8> u8buf;
@@ -463,5 +516,250 @@ typedef buffer<f64> f64buf;
 
 
 
+
+template<class T, u32 R, u32 C>
+class mat {
+public:
+	T data[R * C];
+	using row = R;
+	using col = C;
+public:
+	mat()
+	{
+		u32 off = 0;
+		for(u32 r = 0; r < R; r++) 
+		{
+			for(u32 c = 0; c < C; c++)
+			{
+				data[off + c] = R == C ? (r == c ? T(1) : T(0)) : T(0);
+			}
+			off += R; 
+		}
+	}
+	mat(mat & m) {
+		for(u32 i = 0; i < R * C; i++) data[i] = m.data[i];
+	}
+	mat operator=(mat & m) 
+	{
+		for(u32 i = 0; i < R * C; i++) data[i] = m.data[i];
+		return *this;
+	}
+	mat(initializer_list<T> il) 
+	{
+		u32 i = 0;
+    	for(auto it = il.begin();it != il.end(); it++) data[i++] = T(*it);
+	}
+	T* operator[](u32 i)
+	{
+		return &data[i * C];
+	}
+	T* at(u32 i)
+	{
+		return &data[i * C];
+	}
+	T& at(u32 i,u32 j)
+	{
+		return data[i * C + j];
+	}
+	mat operator+(mat & m)
+	{
+		mat o;
+		u32 off = 0;
+		for(u32 r = 0; r < R; r++) 
+		{
+			for(u32 c = 0; c < C; c++)
+			{
+				o.data[off + c] = m.data[off + c] + data[off + c];
+			}
+			off += R; 
+		}
+		return o;
+	}
+	mat operator-(mat & m)
+	{
+		mat o;
+		u32 off = 0;
+		for(u32 r = 0; r < R; r++) 
+		{
+			for(u32 c = 0; c < C; c++)
+			{
+				o.data[off + c] = data[off + c] - m.data[off + c];
+			}
+			off += R; 
+		}
+		return o;
+	}
+	mat<T,,> operator*(mat<T,u32,u32> & m)
+	{
+
+		assert(col == m.row);
+        mat<T,row, n.col> o;
+        for (u32 y = 0; y < o.row; y++)
+            for (u32 x = 0; x < o.col; x++)
+            {
+                T result = T();
+                for (u32 k = 0; k < _cols; k++)
+                    result += data[y * C + k] * m.data[m.col * k + x];
+                o.data[y * o.col + x ] = result;
+            }
+        return o;
+	}
+};
+
+template<class T, u32 R, u32 C>
+ostream& operator<<(ostream& os, mat<T,R,C> &m)
+{
+	u32 off = 0;
+	for(u32 r = 0; r < R; r++) 
+	{
+		for(u32 c = 0; c < C; c++)
+		{
+			os << m.data[off + c] << " ";
+		}
+		off += R; 
+		os << "\n"; 
+	}
+	return os;
+	
+}
+
+
+
+
+
+
+
+/*
+template<class T, u32 N>
+class vec
+{
+public:
+	T data[N];
+public:
+	vec()
+	{
+		for(u32 i = 0; i < N; i++) data[i] = T();
+	}
+	vec(vec<T,N> & v)
+	{
+		for(u32 i = 0; i < N; i++) data[i] = v.data[i];
+	}
+	vec4& operator=(vec<T,N> & v)
+	{
+		for(u32 i = 0; i < N; i++) data[i] = v.data[i];
+		return *this;
+	}
+
+	T& at(u32 i)
+	{
+		return data[i];
+	}
+
+	T& operator[](u32 i)
+	{
+		return data[i];
+	}
+	vec operator+(vec<T,N> & v)
+	{
+		vec4 o;
+		for(u32 i = 0; i < N; i++) o.data[i] = v.data[i] + data[i];
+		return o;
+	}
+	vec operator-(vec<T,N> & v)
+	{
+		vec4 o;
+		for(u32 i = 0; i < N; i++) o.data[i] = v.data[i] - data[i];
+		return o;
+	}
+	vec operator*(vec<T,N> & v)
+	{
+		vec4 o;
+		for(u32 i = 0; i < N; i++) o.data[i] = v.data[i] * data[i];
+		return o;
+	}
+
+	vec& operator+=(vec<T,N> & v)
+	{
+		for(u32 i = 0; i < N; i++) data[i] += v.data[i];
+		return *this;
+	}
+	vec& operator-=(vec<T,N> & v)
+	{
+		for(u32 i = 0; i < N; i++) data[i] -= v.data[i];
+		return *this;
+	}
+	vec& operator*=(vec<T,N> & v)
+	{
+		for(u32 i = 0; i < N; i++) data[i] *= v.data[i];
+		return *this;
+	}
+
+	vec operator+(T & v)
+	{
+		vec4 o;
+		for(u32 i = 0; i < N; i++) o.data[i] = v + data[i];
+		return o;
+	}
+	vec operator-(T & v)
+	{
+		vec4 o;
+		for(u32 i = 0; i < N; i++) o.data[i] = v - data[i];
+		return o;
+	}
+	vec operator*(T & v)
+	{
+		vec4 o;
+		for(u32 i = 0; i < N; i++) o.data[i] = v * data[i];
+		return o;
+	}
+
+	vec operator/(T & v)
+	{
+		vec4 o;
+		for(u32 i = 0; i < N; i++) o.data[i] = data[i] / v;
+		return o;
+	}
+
+	vec& operator+=(T & v)
+	{
+		for(u32 i = 0; i < N; i++) data[i] += v;
+		return *this;
+	}
+	vec& operator-=(T & v)
+	{
+		for(u32 i = 0; i < N; i++) data[i] -= v;
+		return *this;
+	}
+	vec& operator*=(T & v)
+	{
+		for(u32 i = 0; i < N; i++) data[i] *= v;
+		return *this;
+	}
+	vec& operator/=(T & v)
+	{
+		for(u32 i = 0; i < N; i++) data[i] /= v;
+		return *this;
+	}
+	T len()
+	{
+		T m();
+		for(u32 i = 0; i < N; i++) m += data[m] * data[m];
+		return sqrt(m);
+	}
+	void norm()
+	{
+		T l = len();
+		if(l) for(u32 i = 0; i < N; i++) data[m] /= l;
+	}
+
+
+};
+
+
+class graph
+{
+public:
+};
+*/
 
 }; //namespace sp

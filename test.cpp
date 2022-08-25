@@ -6,7 +6,7 @@ using namespace std;
 using namespace sp;
 
 int main() {
-
+#if 0
 	buffer<f32> a = {1.0f, 3.0f, 23.0f};
 	buffer<f32> a_copy = a;
 	a_copy[2] = 4.2f;
@@ -49,8 +49,33 @@ int main() {
 	cout << endl;
 	//c = c.sort([](const i32 & a, const i32& b){return a > b;});
 	sort(c.begin(), c.end(),[](const i32 & a, const i32& b){return a > b;});
+	c.push_front(57);
+	c.push_front(7);
+	c.push_front(27);
+	c.push_front(34);
+	c.push_front({1,2,1,1});
 	for(buffer<i32>::itr itr = c.begin(); itr != c.end(); itr++)
 		cout << *itr << " ";
 	cout << endl;
+	buffer<i32> e = c.splice(0, 6);
+	cout << e << endl;
+	e.push_mid(2,{3,3,4});
+	cout << e << endl;
+#endif
+
+	mat<float, 2,2> m;
+	m[0][1] = 4.0;
+
+	mat<float, 2,2> m2 = {
+		0, 0,
+		1, 1
+	};
+	mat<float,2,2> m3 = m + m2;
+	cout << m << endl;
+	cout << m2 << endl;
+	cout << m3 << endl;
+
+
+
 
 }

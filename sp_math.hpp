@@ -102,19 +102,19 @@ namespace sp
 				data[i] = v[i];
 			return *this;
 		}
-		T &operator[](u32 i)
+		T &operator[](u32 i) const
 		{
 			return data[index(i)];
 		}
-		T &front()
+		T &front() const
 		{
 			return data[index(off)];
 		}
-		T &back()
+		T &back() const
 		{
 			return data[index(len - 1)];
 		}
-		T &at(u32 i)
+		T &at(u32 i) const
 		{
 			return data[index(i)];
 		}
@@ -346,7 +346,7 @@ namespace sp
 			return (off + len - 1) % cap;
 		}
 
-		int index(int i)
+		int index(int i) const
 		{
 			return (i + off) % cap;
 		}
@@ -358,7 +358,7 @@ namespace sp
 	{
 	public:
 		using value_type = typename buffer::value_type;
-		using difference_type = value_type;
+		using difference_type = i32;
 		using pointer = value_type *;
 		using reference = value_type &;
 		using iterator_category = std::random_access_iterator_tag;
@@ -433,12 +433,12 @@ namespace sp
 			return lhs.ind - rhs.ind;
 		}
 
-		friend buffer_iterator operator-(buffer_iterator const &lhs, value_type rhs)
+		friend buffer_iterator operator-(buffer_iterator const &lhs, difference_type rhs)
 		{
 			return buffer_iterator(lhs.buff, lhs.ind - rhs);
 		}
 
-		friend buffer_iterator operator+(buffer_iterator const &lhs, value_type rhs)
+		friend buffer_iterator operator+(buffer_iterator const &lhs, difference_type rhs)
 		{
 			return buffer_iterator(lhs.buff, lhs.ind + rhs);
 		}
@@ -454,9 +454,15 @@ namespace sp
 			return lhs;
 		}
 
+		friend buffer_iterator &operator+=(buffer_iterator &lhs, const difference_type &rhs)
+		{
+			lhs.ind += rhs;
+			return lhs;
+		}
+
 		friend buffer_iterator &operator-=(buffer_iterator &lhs, const buffer_iterator &rhs)
 		{
-			lhs.ind -= rhs.ind;
+			lhs.ind -= rhs;
 			return lhs;
 		}
 		friend bool operator<=(const buffer_iterator &lhs, const buffer_iterator &rhs)
@@ -481,7 +487,7 @@ namespace sp
 	}; //buffer_iterator
 
 	template <typename T>
-	ostream &operator<<(ostream &os, buffer<T> &b)
+	ostream &operator<<(ostream &os,const buffer<T> &b)
 	{
 		if (b.len)
 		{
@@ -499,25 +505,6 @@ namespace sp
 		return os;
 	}
 
-	template <typename T>
-	ostream &operator<<(ostream &os, buffer<T> b)
-	{
-		if (b.len)
-		{
-			os << "[ ";
-			for (u32 i = 0; i < b.len - 1; i++)
-			{
-				os << b.at(i) << ", ";
-			}
-			os << b.at(b.len - 1) << " ]";
-		}
-		else
-		{
-			os << "[ ]";
-		}
-
-		return os;
-	}
 
 	typedef buffer<u8> u8buf;
 	typedef buffer<u32> u32buf;
@@ -557,7 +544,7 @@ namespace sp
 		mat(mat &m) :data(m.data), row(m.row), col(m.col)
 		{
 		}
-		mat operator=(mat &m)
+		mat operator=(const mat &m)
 		{
 			data = m.data;
 			row = m.row;
@@ -583,19 +570,19 @@ namespace sp
 					data[i++] = T(*it2);
 			}
 		}
-		T *operator[](u32 i)
+		T *operator[](u32 i) const
 		{
 			return &data[i * col];
 		}
-		T *at(u32 i)
+		T *at(u32 i) const
 		{
 			return &data[i * col];
 		}
-		T &at(u32 i, u32 j)
+		T &at(u32 i, u32 j) const
 		{
 			return data[i * col + j];
 		}
-		mat operator+(mat &m)
+		mat operator+(const mat &m)
 		{
 			if(!(m.row == row && m.col == col)) return mat();
 			mat o(row, col);
@@ -611,7 +598,7 @@ namespace sp
 			}
 			return o;
 		}
-		mat operator-(mat &m)
+		mat operator-(const mat &m)
 		{
 			if(!(m.row == row && m.col == col)) return mat();
 			mat o(row, col);
@@ -626,7 +613,7 @@ namespace sp
 			}
 			return o;
 		}
-		mat operator*(mat &m)
+		mat operator*(const mat &m)
 		{
 
 			if(!(col == m.row)) return mat();
@@ -643,7 +630,7 @@ namespace sp
 			return o;
 		}
 
-		mat& operator+=(mat &m)
+		mat& operator+=(const mat &m)
 		{
 			if(!(m.row == row && m.col == col)) return *this;
 			u32 off = 0;
@@ -658,7 +645,7 @@ namespace sp
 			}
 			return *this;
 		}
-		mat& operator-=(mat &m)
+		mat& operator-=(const mat &m)
 		{
 			if(!(m.row == row && m.col == col)) return *this;
 			u32 off = 0;
@@ -672,7 +659,7 @@ namespace sp
 			}
 			return *this;
 		}
-		mat& operator*= (mat &m)
+		mat& operator*= (const mat &m)
 		{
 
 			if(!(col == m.row)) return *this;
@@ -690,6 +677,115 @@ namespace sp
 			return *this;
 		}
 
+		mat operator+(const T &t)
+		{
+			mat o(row, col);
+			u32 off = 0;
+
+			for (u32 r = 0; r < row; r++)
+			{
+				for (u32 c = 0; c < col; c++)
+				{
+					o.data[off + c] = t + data[off + c];
+				}
+				off += row;
+			}
+			return o;
+		}
+		mat operator-(const T &t)
+		{
+			mat o(row, col);
+			u32 off = 0;
+			for (u32 r = 0; r < row; r++)
+			{
+				for (u32 c = 0; c < col; c++)
+				{
+					o.data[off + c] = data[off + c] - t;
+				}
+				off += col;
+			}
+			return o;
+		}
+		mat operator*(const T &t)
+		{
+
+			mat o(row, row);
+
+			for (u32 y = 0; y < o.row; y++)
+				for (u32 x = 0; x < o.col; x++)
+				{
+					o.data[y * col + x] = data[y * col + x] * t;
+				}
+			return o;
+		}
+		mat operator/(const T &t)
+		{
+			if(t == T(0)) return mat();
+			mat o(row, col);
+
+			for (u32 y = 0; y < o.row; y++)
+				for (u32 x = 0; x < o.col; x++)
+				{
+					o.data[y * col + x] = data[y * col + x] / t;
+				}
+			return o;
+		}
+
+		mat& operator+=(const T &t)
+		{
+			u32 off = 0;
+
+			for (u32 r = 0; r < row; r++)
+			{
+				for (u32 c = 0; c < col; c++)
+				{
+					data[off + c] += t;
+				}
+				off += row;
+			}
+			return *this;
+		}
+		mat& operator-=(const T &t)
+		{
+			u32 off = 0;
+			for (u32 r = 0; r < row; r++)
+			{
+				for (u32 c = 0; c < col; c++)
+				{
+					data[off + c] -= t;
+				}
+				off += col;
+			}
+			return *this;
+		}
+		mat& operator*= (const T &t)
+		{
+			u32 off = 0;
+			for (u32 r = 0; r < row; r++)
+			{
+				for (u32 c = 0; c < col; c++)
+				{
+					data[off + c] *= t;
+				}
+				off += col;
+			}
+			return *this;
+		}
+		mat& operator/= (const T &t)
+		{
+			if(t == T(0)) return *this;
+			u32 off = 0;
+			for (u32 r = 0; r < row; r++)
+			{
+				for (u32 c = 0; c < col; c++)
+				{
+					data[off + c] /= t;
+				}
+				off += col;
+			}
+			return *this;
+		}
+
 
 
 		mat map(T (*func)(const T & t))
@@ -700,12 +796,93 @@ namespace sp
 				o.data[i] = func(data[i]);
 			}
 			return o;
-	}
-		
+		}
+
+		mat transpose()
+		{
+			mat o(col, row);
+      for (u32 y = 0; y < row; y++)
+          for (u32 x = 0; x < col; x++)
+          {
+            	o.data[x * row + y] = data[y * col + x];
+
+          }
+      return o;
+
+		}
+		mat cofactor(u32 r, u32 c)
+    {
+        mat o(col - 1, row - 1);
+        u32 i = 0;
+        for (u32 y = 0; y < row; y++)
+          for (u32 x = 0; x < col; x++)
+          {
+              if (x == c || y == r) continue;
+              o.data[i++] = data[y * col + x];
+          }
+
+        return o;
+    }
+		T determinant()
+    {
+        if(row != col) return T(0);
+        T o = T();
+        if (row == 1)
+        {
+            return data[0];
+        }
+        else
+        {
+            i32 sign = 1;
+            for (u32 x = 0; x < col; x++)
+            {
+                o += sign * data[x] * cofactor(0, x).determinant();
+                sign *= -1;
+            }
+        }
+
+        return o;
+    }
+		mat adjoint()
+    {
+        if(row == col) return mat();
+        mat o(col, row);
+        i32 sign = 1;
+        for (u32 y = 0; y < row; y++)
+            for (u32 x = 0; x < col; x++)
+            {
+                o.data[y * col + x] = sign * cofactor(y, x).determinant();
+                sign *= -1;
+            }
+        o = o.transpose();
+
+        return o;
+    }
+
+    mat inverse()
+    {
+        mat adj = adjoint();
+        T d = determinant();
+				if(d == T(0)) return mat();
+        for (u32 y = 0; y < adj.col; y++)
+            for (u32 x = 0; x < adj.row; x++)
+            {
+                adj.data[y * adj.col + x] = adj.data[y * adj.col + x] / d;
+            }
+        return adj;
+    }
+
 	};
 
+	inline mat<float> mat4_identity() {
+		return mat<float>(4,4);
+	}
+	inline mat<float> mat3_identity() {
+		return mat<float>(3,3);
+	}
+
 	template <class T>
-	ostream &operator<<(ostream &os, mat<T> &m)
+	ostream &operator<<(ostream &os,const mat<T> &m)
 	{
 		u32 off = 0;
 		for (u32 r = 0; r < m.row; r++)
@@ -720,7 +897,7 @@ namespace sp
 		return os;
 	}
 
-	/*
+
 template<class T, u32 N>
 class vec
 {
@@ -729,42 +906,53 @@ public:
 public:
 	vec()
 	{
-		for(u32 i = 0; i < N; i++) data[i] = T();
+		for(u32 i = 0; i < N; i++) data[i] = T(0);
 	}
-	vec(vec<T,N> & v)
+	vec(vec & v)
 	{
 		for(u32 i = 0; i < N; i++) data[i] = v.data[i];
 	}
-	vec4& operator=(vec<T,N> & v)
+	vec(const T & t)
+	{
+		for(u32 i = 0; i < N; i++) data[i] = t;
+	}
+	vec& operator=(const vec<T,N> & v)
 	{
 		for(u32 i = 0; i < N; i++) data[i] = v.data[i];
 		return *this;
 	}
 
-	T& at(u32 i)
+	vec(initializer_list<T> il)
+	{
+		u32 i = 0;
+		for(auto it = il.begin(); it != il.end(); it++)
+		 data[i++] = *it;
+	}
+
+	T& at(u32 i) const
 	{
 		return data[i];
 	}
 
-	T& operator[](u32 i)
+	T& operator[](u32 i) const
 	{
 		return data[i];
 	}
 	vec operator+(vec<T,N> & v)
 	{
-		vec4 o;
+		vec o;
 		for(u32 i = 0; i < N; i++) o.data[i] = v.data[i] + data[i];
 		return o;
 	}
 	vec operator-(vec<T,N> & v)
 	{
-		vec4 o;
+		vec o;
 		for(u32 i = 0; i < N; i++) o.data[i] = v.data[i] - data[i];
 		return o;
 	}
 	vec operator*(vec<T,N> & v)
 	{
-		vec4 o;
+		vec o;
 		for(u32 i = 0; i < N; i++) o.data[i] = v.data[i] * data[i];
 		return o;
 	}
@@ -785,72 +973,84 @@ public:
 		return *this;
 	}
 
-	vec operator+(T & v)
+	vec operator+(T & t)
 	{
-		vec4 o;
-		for(u32 i = 0; i < N; i++) o.data[i] = v + data[i];
+		vec o;
+		for(u32 i = 0; i < N; i++) o.data[i] = t + data[i];
 		return o;
 	}
-	vec operator-(T & v)
+	vec operator-(T & t)
 	{
-		vec4 o;
-		for(u32 i = 0; i < N; i++) o.data[i] = v - data[i];
+		vec o;
+		for(u32 i = 0; i < N; i++) o.data[i] = data[i] - t;
 		return o;
 	}
-	vec operator*(T & v)
+	vec operator*(T & t)
 	{
-		vec4 o;
-		for(u32 i = 0; i < N; i++) o.data[i] = v * data[i];
-		return o;
-	}
-
-	vec operator/(T & v)
-	{
-		vec4 o;
-		for(u32 i = 0; i < N; i++) o.data[i] = data[i] / v;
+		vec o;
+		for(u32 i = 0; i < N; i++) o.data[i] = t * data[i];
 		return o;
 	}
 
-	vec& operator+=(T & v)
+	vec operator/(T & t)
 	{
-		for(u32 i = 0; i < N; i++) data[i] += v;
+		vec o;
+		for(u32 i = 0; i < N; i++) o.data[i] = data[i] / t;
+		return o;
+	}
+
+	vec& operator+=(T & t)
+	{
+		for(u32 i = 0; i < N; i++) data[i] += t;
 		return *this;
 	}
-	vec& operator-=(T & v)
+	vec& operator-=(T & t)
 	{
-		for(u32 i = 0; i < N; i++) data[i] -= v;
+		for(u32 i = 0; i < N; i++) data[i] -= t;
 		return *this;
 	}
-	vec& operator*=(T & v)
+	vec& operator*=(T & t)
 	{
-		for(u32 i = 0; i < N; i++) data[i] *= v;
+		for(u32 i = 0; i < N; i++) data[i] *= t;
 		return *this;
 	}
-	vec& operator/=(T & v)
+	vec& operator/=(T & t)
 	{
-		for(u32 i = 0; i < N; i++) data[i] /= v;
+		if(t == T(0))return vec();
+		for(u32 i = 0; i < N; i++) data[i] /= t;
 		return *this;
 	}
+
 	T len()
 	{
-		T m();
-		for(u32 i = 0; i < N; i++) m += data[m] * data[m];
+		T m(0);
+		for(u32 i = 0; i < N; i++) m += data[i] * data[i];
 		return sqrt(m);
 	}
 	void norm()
 	{
 		T l = len();
-		if(l) for(u32 i = 0; i < N; i++) data[m] /= l;
+		if(l) for(u32 i = 0; i < N; i++) data[i] /= l;
 	}
 
 
 };
+
+template<class T, u32 N>
+ostream & operator<< (ostream & os, const vec<T, N> &v)
+{
+	os << "( ";
+	for(u32 i = 0; i < N-1; i++)
+		os << v.data[i] << ", ";
+	os << v.data[N-1] << " )";
+	return os;
+}
 
 
 class graph
 {
 public:
 };
-*/
+
 
 }; //namespace sp

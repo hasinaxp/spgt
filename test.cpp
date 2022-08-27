@@ -14,7 +14,7 @@ int main() {
 	cout << "a : " << a << endl;
 	cout << "a_copy : " << a_copy << endl;
 
-	buffer<i32> b = buffer<i32>();
+	buffer<i32> b;
 	b.push(1);
 	b.push({2,2,5,7,3,5,8});
 	cout << b << endl;
@@ -48,7 +48,7 @@ int main() {
 	for(i32 i : c) cout << i << " ";
 	cout << endl;
 	//c = c.sort([](const i32 & a, const i32& b){return a > b;});
-	sort(c.begin(), c.end(),[](const i32 & a, const i32& b){return a > b;});
+	sort(c.begin(), c.end(), [](const i32 & a, const i32& b){return a > b;});
 	c.push_front(57);
 	c.push_front(7);
 	c.push_front(27);
@@ -63,23 +63,40 @@ int main() {
 	cout << e << endl;
 #endif
 
+#if 0
 	mat<float> m1 = {
-		{2.0f, 2.0f},
-		{3.0f, 3.0f}
+		{2.0f, 2.0f, 0.0f},
+		{3.0f, 3.0f, 1.0f},
+		{0.0f, 3.0f, 0.0f},
 	};
 	mat<float> m2 = {
-		{2.0f, 2.0f},
-		{5.0f, 3.0f}
+		{2.0f, 2.0f, 3.0f},
+		{5.0f, 3.0f, 0.0f},
+		{1.0f, 1.0f, 1.0f},
 	};
-	mat<float> m3 = m1 * m2;
+	mat<float> m3 = m1 * m2 ;
 	cout << m1 << endl;
 	cout << m2 << endl;
 	cout << m3 << endl;
-	m3 = m3.map([](const float & f){return f * f; });
-	cout << m3 << endl;
-	m3 -= m1 * m2;
-	cout << m3 << endl;
+	cout << m3.cofactor(0,0) << endl << m3.cofactor(0,1) << endl;
+	cout << m3.transpose() << endl;
+	cout << m3.determinant() << endl;
+	cout << m3.inverse() << endl;
+	mat<float> m4 =   (m1 + m2) * 10.0 -m3;
+	cout << m4 << endl;
+	m4 += 10.0;
+	cout << m4 << endl;
+	m4 *= 10.0;
+	cout << m4 << endl;
+	m4 /= 2.0;
+	cout << m4 << endl;
+#endif
 
+	vec<float,3> v1(4.0f);
+	vec<float,3> v2 = {1.0f, 2.0f, 1.0f};
+
+	cout << v1 << endl;
+	cout << v2 << endl;
 
 
 

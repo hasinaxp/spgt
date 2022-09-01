@@ -63,7 +63,7 @@ int main() {
 	cout << e << endl;
 #endif
 
-#if 0
+#if 1
 	mat<float> m1 = {
 		{2.0f, 2.0f, 0.0f},
 		{3.0f, 3.0f, 1.0f},
@@ -74,6 +74,7 @@ int main() {
 		{5.0f, 3.0f, 0.0f},
 		{1.0f, 1.0f, 1.0f},
 	};
+	m1 += m2;
 	mat<float> m3 = m1 * m2 ;
 	cout << m1 << endl;
 	cout << m2 << endl;
@@ -92,12 +93,24 @@ int main() {
 	cout << m4 << endl;
 #endif
 
-	vec<float,3> v1(4.0f);
+	vec<float,3> v1 = {1.0f, 1.0f, 0.0f};
 	vec<float,3> v2 = {1.0f, 2.0f, 1.0f};
 
-	cout << v1 << endl;
-	cout << v2 << endl;
 
+	cout << v1 << endl;
+	cout << v1 * m2 << endl;
+	cout << m2 * v1 << endl;
+	cout << v1.to_mat() << endl;
+	cout << v2 << endl;
+	cout << v1 + v2 << endl;
+	cout << v1 - v2 << endl;
+	cout << v1.dot(v2) << endl;
+	cout << v1.cross(v2) << endl;
+	cout << v1.reflect(v2) << endl;
+	vec2 v = vec2_cast(v1);
+	cout << v << endl;
+
+	
 
 
 }

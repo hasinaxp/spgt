@@ -83,7 +83,7 @@ namespace sp
 			data = new T[cap];
 			u32 i = 0;
 			for (auto it = il.begin(); it != il.end(); it++)
-				data[index(i++)] = T(*it);
+				data[index(i++)] = *it;
 		}
 		buffer(const vector<T> &v)
 		{
@@ -108,7 +108,7 @@ namespace sp
 		}
 		T &front() const
 		{
-			return data[index(off)];
+			return data[index(0)];
 		}
 		T &back() const
 		{
@@ -136,7 +136,7 @@ namespace sp
 			return arr;
 		}
 
-		void push(const T & t)
+		void push(const T &t)
 		{
 			check(len + 1);
 			len++;
@@ -171,7 +171,7 @@ namespace sp
 			for (auto it = il.begin(); it != il.end(); it++)
 				data[index(i++)] = T(*it);
 		}
-		void push_mid(u32 p, initializer_list<T> il)
+		void push_mid(const u32 &p, initializer_list<T> il)
 		{
 			u32 n = il.size();
 			check(len + n);
@@ -203,24 +203,24 @@ namespace sp
 		{
 			check(n);
 		}
-		void resize(u32 n,const T & t = T())
+		void resize(u32 n, const T &t = T())
 		{
 			check(n);
 
-			if(len < n) 
+			if (len < n)
 			{
-				for(u32 i = 1; i <= n - len; i++)
+				for (u32 i = len; i <= n - len; i++)
 					data[index(len + i)] = t;
 			}
 			len = n;
 		}
-		void del(u32 i)
-		 {
-			data[index(i)] = data[index(len -1)];
+		void del(const u32 &i)
+		{
+			data[index(i)] = data[index(len - 1)];
 			len--;
 			check(len);
 		}
-		void fill(T t)
+		void fill(const T &t)
 		{
 			for (u32 i = 0; i < len; i++)
 				data[index(i)] = t;
@@ -320,7 +320,7 @@ namespace sp
 		{
 			return concat(b);
 		}
-		buffer<T> &operator+=(const buffer<T> &b) const
+		buffer<T> &operator+=(const buffer<T> &b)
 		{
 			check(len + b.len);
 			u32 x = len;
@@ -533,8 +533,7 @@ namespace sp
 	typedef buffer<f32> f32buf;
 	typedef buffer<f64> f64buf;
 
-
-	template<class,u32>
+	template <class, u32>
 	class vec;
 
 	template <class T>
@@ -549,22 +548,32 @@ namespace sp
 		mat() : data(buffer<T>()), row(0), col(0)
 		{
 		}
-		mat(u32 R, u32 C) : data(buffer<T>(R * C)), row(R), col(C)
+		mat(u32 R, u32 C, bool identity = true) : data(buffer<T>(R * C)), row(R), col(C)
 		{
 			u32 off = 0;
-			for (u32 r = 0; r < R; r++)
+			if (identity && R == C)
 			{
-				for (u32 c = 0; c < C; c++)
+				for (u32 r = 0; r < R; r++)
 				{
-					data[off + c] = R == C ? (r == c ? T(1) : T(0)) : T(0);
+					for (u32 c = 0; c < C; c++)
+					{
+						data[off + c] = (r == c ? T(1) : T(0));
+					}
+					off += col;
 				}
-				off += col;
+			}
+			else
+			{
+				for (u32 i = 0; i < R * C; i++)
+				{
+					data[i] = T(0);
+				}
 			}
 		}
 		mat(mat &m) : data(m.data), row(m.row), col(m.col)
 		{
 		}
-		mat& operator=(const mat &m)
+		mat &operator=(const mat &m)
 		{
 			data = m.data;
 			row = m.row;
@@ -654,7 +663,7 @@ namespace sp
 			return o;
 		}
 
-		mat &operator+=(const mat &m) 
+		mat &operator+=(const mat &m)
 		{
 			if (!(m.row == row && m.col == col))
 				return *this;
@@ -670,7 +679,7 @@ namespace sp
 			}
 			return *this;
 		}
-		mat &operator-=(const mat &m) 
+		mat &operator-=(const mat &m)
 		{
 			if (!(m.row == row && m.col == col))
 				return *this;
@@ -685,7 +694,7 @@ namespace sp
 			}
 			return *this;
 		}
-		mat &operator*=(const mat &m) 
+		mat &operator*=(const mat &m)
 		{
 
 			if (!(col == m.row))
@@ -704,7 +713,7 @@ namespace sp
 			return *this;
 		}
 
-		mat operator+(const T &t) const 
+		mat operator+(const T &t) const
 		{
 			mat o(row, col);
 			u32 off = 0;
@@ -773,7 +782,7 @@ namespace sp
 			}
 			return *this;
 		}
-		mat &operator-=(const T &t) 
+		mat &operator-=(const T &t)
 		{
 			u32 off = 0;
 			for (u32 r = 0; r < row; r++)
@@ -786,7 +795,7 @@ namespace sp
 			}
 			return *this;
 		}
-		mat &operator*=(const T &t) 
+		mat &operator*=(const T &t)
 		{
 			u32 off = 0;
 			for (u32 r = 0; r < row; r++)
@@ -799,7 +808,7 @@ namespace sp
 			}
 			return *this;
 		}
-		mat &operator/=(const T &t) 
+		mat &operator/=(const T &t)
 		{
 			if (t == T(0))
 				return *this;
@@ -900,7 +909,6 @@ namespace sp
 				}
 			return adj;
 		}
-
 	};
 
 	inline mat<float> mat4_identity()
@@ -911,7 +919,6 @@ namespace sp
 	{
 		return mat<float>(3, 3);
 	}
-
 
 	template <class T>
 	ostream &operator<<(ostream &os, const mat<T> &m)
@@ -992,15 +999,19 @@ namespace sp
 			return data[i];
 		}
 
-		T &operator[](u32 i) const
+		T &operator[](const u32 &i)
+		{
+			return data[i];
+		}
+		T operator[](const u32 &i) const
 		{
 			return data[i];
 		}
 
 		bool operator==(const vec<T, N> &v) const
 		{
-			for(u32 i = 0; i != N; i++)
-				if(data[i] != v.data[i])
+			for (u32 i = 0; i != N; i++)
+				if (data[i] != v.data[i])
 					return false;
 			return true;
 		}
@@ -1150,17 +1161,15 @@ namespace sp
 		mat<T> to_mat() const
 		{
 			mat<T> m(1, N);
-			for(u32 i = 0; i< N; i++)
+			for (u32 i = 0; i < N; i++)
 				m.data[i] = data[i];
 			return m;
 		}
-
 	};
 
 	typedef vec<float, 2> vec2;
 	typedef vec<float, 3> vec3;
 	typedef vec<float, 4> vec4;
-
 
 	inline vec2 vec2_cast(vec3 &v)
 	{
@@ -1193,9 +1202,6 @@ namespace sp
 		return o;
 	}
 
-
-	
-
 	template <class T, u32 N>
 	ostream &operator<<(ostream &os, const vec<T, N> &v)
 	{
@@ -1224,86 +1230,367 @@ namespace sp
 		return y;
 	}
 
-	template<class T, u32 N>
-	vec<T,N> operator*(const vec<T,N>& v, const mat<T>& m)
+	template <class T, u32 N>
+	vec<T, N> operator*(const vec<T, N> &v, const mat<T> &m)
 	{
 		mat<T> m1 = v.to_mat();
 		m1 = m1 * m;
-		if(m1.row == 0 && m1.col == 0)
-			return vec<T,N>();
-		vec<T,N> o;
-		for(u32 i = 0; i < N; i++)
+		if (m1.row == 0 && m1.col == 0)
+			return vec<T, N>();
+		vec<T, N> o;
+		for (u32 i = 0; i < N; i++)
 			o.data[i] = m1.data[i];
 		return o;
 	}
 
-	template<class T, u32 N>
-	vec<T,N> operator*(const mat<T>& m, const vec<T,N>& v)
+	template <class T, u32 N>
+	vec<T, N> operator*(const mat<T> &m, const vec<T, N> &v)
 	{
 		mat<T> m1 = v.to_mat();
 		m1 = m1 * m;
-		if(m1.row == 0 && m1.col == 0)
-			return vec<T,N>();
-		vec<T,N> o;
-		for(u32 i = 0; i < N; i++)
+		if (m1.row == 0 && m1.col == 0)
+			return vec<T, N>();
+		vec<T, N> o;
+		for (u32 i = 0; i < N; i++)
 			o.data[i] = m1.data[i];
 		return o;
 	}
 
+	template <class>
+	class dfs_iterator;
+
+	template <class>
+	class bfs_iterator;
+
+	template <class T>
 	class graph
 	{
 	public:
+		using value_type = T;
 		using edge = vec<u32, 2>;
-		buffer<u32> vertices;  
+		using path = buffer<u32>;
+		using dfs_itr = dfs_iterator<graph<T>>;
+		using bfs_itr = bfs_iterator<graph<T>>;
+		buffer<T> verts;
 		buffer<edge> edges;
 		buffer<f32> costs;
+		bool directed = false;
+
 	public:
-		graph() : edges(buffer<edge>()), vertices(buffer<u32>()),  costs(buffer<f32>())
+		graph() : verts(buffer<T>()), edges(buffer<edge>()), costs(buffer<f32>())
 		{
 		}
-		graph(const graph & g) : edges(g.edges), vertices(g.vertices), costs({})
+
+		graph(const buffer<T> &vs, const buffer<edge> &es, const buffer<f32> &cs = buffer<f32>())
 		{
-		}
-		graph& operator=(const graph & g)
-		{
-			edges = g.edges;
-			vertices = g.vertices;
-			costs = g.costs;
-			return *this;
-		}
-		graph(const buffer<u32> &vs,const buffer<edge> & es  = buffer<edge>(), const buffer<f32> & cs = buffer<f32>() ) : vertices(vs), edges(es), costs(cs)
-		{
+			verts = vs;
+			edges = es;
+			costs = cs;
 			costs.resize(edges.len, 1.0f);
 		}
 
-		void add_edge(const edge & e,const f32 & cost = 1.0f)
+		graph(const graph &g) : verts(g.verts), edges(g.edges), costs(g.costs)
+		{
+		}
+
+		graph &operator=(const graph &g)
+		{
+			verts = g.verts;
+			edges = g.edges;
+			costs = g.costs;
+
+			return *this;
+		}
+
+		void add_vert(const T &v)
+		{
+			verts.push(v);
+		}
+
+		void add_edge(const edge &e, f32 cost = 1.0f)
 		{
 			edges.push(e);
 			costs.push(cost);
 		}
-		void del_edge(edge & e)
+
+		void del_edge(const edge &e)
 		{
 			i32 i = edges.indexOf(e);
-			if(i != -1)
+			if (i != -1)
 			{
 				edges.del((u32)i);
 				costs.del((u32)i);
 			}
-			
 		}
-		
-		/*
-		mat<float> adj_mat()
-		{
-			mat<float> m(vertices.len, vertices.len);
-			for(u32 i = 0; i < edges.len; i++)
-			{
-				edge & e = edges[i];
-				m[e[0]][e[]]
-			}
-		}
-		*/
 
+		buffer<u32> adj_verts(u32 r)
+		{
+			buffer<u32> vs;
+			for (const edge &e : edges)
+			{
+				if (e[0] == r)
+					vs.push(e[1]);
+				if (e[1] == r)
+					vs.push(e[0]);
+			}
+			return vs;
+		}
+
+
+		mat<f32> adj_mat() const
+		{
+			mat<f32> m(verts.len, verts.len, false);
+
+			for (u32 i = 0; i < edges.len; i++)
+			{
+				edge &e = edges[i];
+				f32 &c = costs[i];
+				m[e[0]][e[1]] = c;
+			}
+			if (!directed)
+			{
+				for (u32 i = 0; i < edges.len; i++)
+				{
+					edge &e = edges[i];
+					f32 &c = costs[i];
+					m[e[1]][e[0]] = c;
+				}
+			}
+
+			return m;
+		}
 	};
+
+	template <typename graph>
+	class dfs_iterator
+	{
+	public:
+		using value_type = typename graph::value_type;
+		using difference_type = i32;
+		using pointer = value_type *;
+		using reference = value_type &;
+		using iterator_category = std::forward_iterator_tag;
+		using ptr_type = value_type *;
+		using ref_type = value_type &;
+
+		graph *gp;
+		u32 root;
+		buffer<u32> verts_to_visit;
+		buffer<u32> current_path;
+		set<u32> verts_visited;
+
+	public:
+		dfs_iterator(graph *g, u32 r) : gp(g), root(r), verts_to_visit(buffer<u32>()), current_path(buffer<u32>()), verts_visited({})
+		{
+		}
+		dfs_iterator(const dfs_iterator &d)
+		{
+			gp = d.gp;
+			root = d.root;
+			verts_to_visit = d.verts_to_visit;
+			verts_visited = d.verts_visited;
+		}
+		~dfs_iterator()
+		{
+			gp = nullptr;
+			root = 0;
+		}
+		dfs_iterator &operator++()
+		{
+			if (verts_visited.size() == gp->verts.len)
+				return *this;
+			verts_visited.insert(root);
+			current_path.push(root);
+			buffer<u32> vs0 = gp->adj_verts(root);
+			if (vs0.len == 0)
+				current_path.pop();
+
+			u32 n = root;
+			bool b = true;
+			if (verts_to_visit.len == 0)
+			{
+				b = false;
+				verts_to_visit = vs0;
+			}
+			while (verts_visited.count(n) && verts_to_visit.len)
+			{
+				n = verts_to_visit.pop();
+			}
+			if (b)
+			{
+				for (const u32 &v : vs0)
+					verts_to_visit.push(v);
+			}
+			buffer<u32> vs = gp->adj_verts(n);
+			for (const u32 &v : vs)
+				verts_to_visit.push(v);
+			root = n;
+
+			return *this;
+		}
+		dfs_iterator operator++(int)
+		{
+			dfs_iterator d(*this);
+			++(*this);
+			return d;
+		}
+		ptr_type operator->()
+		{
+			return &gp->verts[root];
+		}
+		ref_type operator*()
+		{
+			return gp->verts[root];
+		}
+
+		dfs_iterator &operator=(const value_type &v)
+		{
+			*this = v;
+			return *this;
+		}
+		operator const value_type &() const { return gp->verts[root]; }
+		bool operator==(const dfs_iterator &bi) const
+		{
+			return gp == bi.gp && root == bi.root;
+		}
+		bool operator!=(const dfs_iterator &bi) const
+		{
+			return !(*this == bi);
+		}
+
+	}; // buffer_iterator
+
+	template <typename graph>
+	class bfs_iterator
+	{
+	public:
+		using value_type = typename graph::value_type;
+		using difference_type = i32;
+		using pointer = value_type *;
+		using reference = value_type &;
+		using iterator_category = std::forward_iterator_tag;
+		using ptr_type = value_type *;
+		using ref_type = value_type &;
+
+		graph *gp;
+		u32 root;
+		buffer<u32> verts_to_visit;
+		set<u32> verts_visited;
+
+	public:
+		bfs_iterator(graph *g, u32 r) : gp(g), root(r), verts_to_visit(buffer<u32>()), verts_visited({})
+		{
+		}
+		bfs_iterator(const bfs_iterator &d)
+		{
+			gp = d.gp;
+			root = d.root;
+			verts_to_visit = d.verts_to_visit;
+			verts_visited = d.verts_visited;
+		}
+		~bfs_iterator()
+		{
+			gp = nullptr;
+			root = 0;
+		}
+		bfs_iterator &operator++()
+		{
+			if (verts_visited.size() == gp->verts.len)
+				return *this;
+
+			verts_visited.insert(root);
+			buffer<u32> vs0 = gp->adj_verts(root);
+
+			for (const u32 &v : vs0)
+				if (verts_visited.count(v) == 0)
+					verts_to_visit.push(v);
+
+			root = verts_to_visit.front();
+			//cout << verts_to_visit << endl;
+			verts_to_visit.shift(1);
+
+			return *this;
+		}
+		bfs_iterator operator++(int)
+		{
+			bfs_iterator d(*this);
+			++(*this);
+			return d;
+		}
+		ptr_type operator->()
+		{
+			return &gp->verts[root];
+		}
+		ref_type operator*()
+		{
+			return gp->verts[root];
+		}
+
+		bfs_iterator &operator=(const value_type &v)
+		{
+			*this = v;
+			return *this;
+		}
+		operator const value_type &() const { return gp->verts[root]; }
+		bool operator==(const bfs_iterator &bi) const
+		{
+			return gp == bi.gp && root == bi.root;
+		}
+		bool operator!=(const bfs_iterator &bi) const
+		{
+			return !(*this == bi);
+		}
+
+	}; // buffer_iterator
+
+	template <typename T>
+	ostream &operator<<(ostream &os, const graph<T> &g)
+	{
+
+		os << g.adj_mat();
+
+		return os;
+	}
+
+
+
+	class dataframe
+	{
+	public:
+		float* data;
+		buffer<u32> shape;
+	public:
+		dataframe() : data(nullptr), shape(buffer<u32>())
+		{
+
+		}
+		dataframe(float * d, const buffer<u32> & s) : data(d), shape(s)
+		{
+
+		}
+		dataframe(const dataframe & d) : data(d.data), shape(d.shape)
+		{
+
+		}
+		dataframe & operator=(const dataframe & d)
+		{
+			data = d.data;
+			shape = d.shape;
+			return *this;
+		}
+		dataframe operator[](int i)
+		{
+			dataframe d;
+			d.shape = shape;
+			d.shape.shift(1);
+			
+
+		}
+		float * val()
+		{
+			return data;
+		}
+
+	}
 
 }; // namespace sp

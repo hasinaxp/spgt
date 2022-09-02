@@ -63,7 +63,7 @@ int main() {
 	cout << e << endl;
 #endif
 
-#if 1
+#if 0
 	mat<float> m1 = {
 		{2.0f, 2.0f, 0.0f},
 		{3.0f, 3.0f, 1.0f},
@@ -91,7 +91,7 @@ int main() {
 	cout << m4 << endl;
 	m4 /= 2.0;
 	cout << m4 << endl;
-#endif
+
 
 	vec<float,3> v1 = {1.0f, 1.0f, 0.0f};
 	vec<float,3> v2 = {1.0f, 2.0f, 1.0f};
@@ -109,8 +109,33 @@ int main() {
 	cout << v1.reflect(v2) << endl;
 	vec2 v = vec2_cast(v1);
 	cout << v << endl;
+#endif
 
+
+
+
+	buffer<int> vs = {0, 1,2,3, 4, 5, 6, 7};
+
+	buffer<graph<int>::edge> es = {
+		{0,1},
+		{0,2},
+		{2,3},
+		{2,4},
+		{2,6},
+		{4,5},
+		{1,7},
+		{1,4},
+		{0,6},
+		{7,5}
+	};
+
+	graph<int> g(vs, es);
+	cout << g << endl;
+	cout << g.paths(0,7) << endl;
 	
+
+
+
 
 
 }

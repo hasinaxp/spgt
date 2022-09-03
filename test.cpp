@@ -6,7 +6,7 @@ using namespace std;
 using namespace sp;
 
 int main() {
-#if 0
+#if 1
 	buffer<f32> a = {1.0f, 3.0f, 23.0f};
 	buffer<f32> a_copy = a;
 	a_copy[2] = 4.2f;
@@ -63,7 +63,7 @@ int main() {
 	cout << e << endl;
 #endif
 
-#if 0
+#if 1
 	mat<float> m1 = {
 		{2.0f, 2.0f, 0.0f},
 		{3.0f, 3.0f, 1.0f},
@@ -131,7 +131,7 @@ int main() {
 
 	graph<int> g(vs, es);
 	cout << g << endl;
-	cout << g.paths(0,7) << endl;
+
 	
 
 

@@ -140,7 +140,7 @@ namespace sp
 		{
 			check(len + 1);
 			len++;
-			data[len - 1] = t;
+			data[index(len - 1)] = t;
 		}
 		void push(initializer_list<T> il)
 		{
@@ -269,7 +269,7 @@ namespace sp
 			return -1;
 		}
 
-		buffer<T> concat(const buffer<T> &b)
+		buffer<T> concat(const buffer<T> &b) const
 		{
 			buffer<T> b1(len + b.len);
 			u32 x = 0;
@@ -1333,7 +1333,7 @@ namespace sp
 				if (e[1] == r)
 					vs.push(e[0]);
 			}
-			return vs;
+			return vs.unique();
 		}
 
 
@@ -1380,6 +1380,9 @@ namespace sp
 		set<u32> verts_visited;
 
 	public:
+		dfs_iterator() : gp(nullptr), root(0), verts_to_visit(buffer<u32>()), current_path(buffer<u32>()), verts_visited({})
+		{
+		}
 		dfs_iterator(graph *g, u32 r) : gp(g), root(r), verts_to_visit(buffer<u32>()), current_path(buffer<u32>()), verts_visited({})
 		{
 		}
@@ -1472,12 +1475,18 @@ namespace sp
 		using ptr_type = value_type *;
 		using ref_type = value_type &;
 
+
+
 		graph *gp;
 		u32 root;
 		buffer<u32> verts_to_visit;
 		set<u32> verts_visited;
 
 	public:
+		bfs_iterator(): gp(nullptr), root(0), verts_to_visit(buffer<u32>()), verts_visited({})
+		{
+
+		}
 		bfs_iterator(graph *g, u32 r) : gp(g), root(r), verts_to_visit(buffer<u32>()), verts_visited({})
 		{
 		}
@@ -1502,12 +1511,14 @@ namespace sp
 			buffer<u32> vs0 = gp->adj_verts(root);
 
 			for (const u32 &v : vs0)
-				if (verts_visited.count(v) == 0)
+				if (verts_visited.count(v) == 0 && verts_to_visit.indexOf(v) == -1)
 					verts_to_visit.push(v);
+			if(verts_to_visit.len)
+			{
 
-			root = verts_to_visit.front();
-			//cout << verts_to_visit << endl;
-			verts_to_visit.shift(1);
+				root = verts_to_visit.front();
+				verts_to_visit.shift(1);
+			}
 
 			return *this;
 		}
@@ -1552,45 +1563,5 @@ namespace sp
 		return os;
 	}
 
-
-
-	class dataframe
-	{
-	public:
-		float* data;
-		buffer<u32> shape;
-	public:
-		dataframe() : data(nullptr), shape(buffer<u32>())
-		{
-
-		}
-		dataframe(float * d, const buffer<u32> & s) : data(d), shape(s)
-		{
-
-		}
-		dataframe(const dataframe & d) : data(d.data), shape(d.shape)
-		{
-
-		}
-		dataframe & operator=(const dataframe & d)
-		{
-			data = d.data;
-			shape = d.shape;
-			return *this;
-		}
-		dataframe operator[](int i)
-		{
-			dataframe d;
-			d.shape = shape;
-			d.shape.shift(1);
-			
-
-		}
-		float * val()
-		{
-			return data;
-		}
-
-	}
 
 }; // namespace sp

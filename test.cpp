@@ -1,12 +1,13 @@
 #include <iostream>
-#include "sp_gt.hpp"
+#include "spgt/sp_img.hpp"
+#include "spgt/sp_math.hpp"
 
 using namespace std;
 
 using namespace sp;
 
 int main() {
-#if 1
+#if 0
 	buffer<f32> a = {1.0f, 3.0f, 23.0f};
 	buffer<f32> a_copy = a;
 	a_copy[2] = 4.2f;
@@ -63,7 +64,7 @@ int main() {
 	cout << e << endl;
 #endif
 
-#if 1
+#if 0
 	mat<float> m1 = {
 		{2.0f, 2.0f, 0.0f},
 		{3.0f, 3.0f, 1.0f},
@@ -112,27 +113,12 @@ int main() {
 #endif
 
 
-
-
-	buffer<int> vs = {0, 1,2,3, 4, 5, 6, 7};
-
-	buffer<graph<int>::edge> es = {
-		{0,1},
-		{0,2},
-		{2,3},
-		{2,4},
-		{2,6},
-		{4,5},
-		{1,7},
-		{1,4},
-		{0,6},
-		{7,5}
-	};
-
-	graph<int> g(vs, es);
-	cout << g << endl;
-
-	
+matrix m = scale_matrix(2,2,2);
+float sc = 2.0;
+matrix p = orthogonal_projection_matrix(-sc, -sc, sc, sc);
+cout << "projection matrix: " << endl << p << endl;
+vec4 v(1.0, 1.0, 4.0, 1.0);
+cout << p * v << endl;
 
 
 

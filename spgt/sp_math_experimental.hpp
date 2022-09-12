@@ -4,10 +4,15 @@
 #include <cstdint>
 #include <vector>
 #include <unordered_map>
+#include <queue>
+#include <list>
 #include <set>
 #include <iostream>
 #include <initializer_list>
 #include <algorithm>
+#include <cassert>
+#include <string>
+#include <memory>
 
 namespace sp
 {
@@ -909,6 +914,7 @@ namespace sp
 				}
 			return adj;
 		}
+		
 	};
 
 	inline mat<float> mat4_identity()
@@ -919,6 +925,12 @@ namespace sp
 	{
 		return mat<float>(3, 3);
 	}
+	inline mat<float> mat2_identity()
+	{
+		return mat<float>(2, 2);
+	}
+
+	typedef mat<float> matrix;
 
 	template <class T>
 	ostream &operator<<(ostream &os, const mat<T> &m)
@@ -1020,21 +1032,29 @@ namespace sp
 			return !(*this == v);
 		}
 
-		vec operator+(vec<T, N> &v)
+		vec operator+(const vec<T, N> &v)
 		{
 			vec o;
 			for (u32 i = 0; i < N; i++)
 				o.data[i] = v.data[i] + data[i];
 			return o;
 		}
-		vec operator-(vec<T, N> &v)
+		vec operator-(const vec<T, N> &v)
 		{
 			vec o;
 			for (u32 i = 0; i < N; i++)
 				o.data[i] = data[i] - v.data[i];
 			return o;
 		}
-		vec operator*(vec<T, N> &v)
+
+		vec operator-()
+		{
+			vec o;
+			for (u32 i = 0; i < N; i++)
+				o.data[i] = -data[i];
+			return o;
+		}
+		vec operator*(const vec<T, N> &v)
 		{
 			vec o;
 			for (u32 i = 0; i < N; i++)
@@ -1042,40 +1062,40 @@ namespace sp
 			return o;
 		}
 
-		vec &operator+=(vec<T, N> &v)
+		vec &operator+=(const vec<T, N> &v)
 		{
 			for (u32 i = 0; i < N; i++)
 				data[i] += v.data[i];
 			return *this;
 		}
-		vec &operator-=(vec<T, N> &v)
+		vec &operator-=(const vec<T, N> &v)
 		{
 			for (u32 i = 0; i < N; i++)
 				data[i] -= v.data[i];
 			return *this;
 		}
-		vec &operator*=(vec<T, N> &v)
+		vec &operator*=(const vec<T, N> &v)
 		{
 			for (u32 i = 0; i < N; i++)
 				data[i] *= v.data[i];
 			return *this;
 		}
 
-		vec operator+(T &t)
+		vec operator+(const T &t)
 		{
 			vec o;
 			for (u32 i = 0; i < N; i++)
 				o.data[i] = t + data[i];
 			return o;
 		}
-		vec operator-(T &t)
+		vec operator-(const T &t)
 		{
 			vec o;
 			for (u32 i = 0; i < N; i++)
 				o.data[i] = data[i] - t;
 			return o;
 		}
-		vec operator*(T &t)
+		vec operator*(const T &t)
 		{
 			vec o;
 			for (u32 i = 0; i < N; i++)
@@ -1083,7 +1103,7 @@ namespace sp
 			return o;
 		}
 
-		vec operator/(T &t)
+		vec operator/(const T &t)
 		{
 			vec o;
 			for (u32 i = 0; i < N; i++)
@@ -1091,25 +1111,25 @@ namespace sp
 			return o;
 		}
 
-		vec &operator+=(T &t)
+		vec &operator+=(const T &t)
 		{
 			for (u32 i = 0; i < N; i++)
 				data[i] += t;
 			return *this;
 		}
-		vec &operator-=(T &t)
+		vec &operator-=(const T &t)
 		{
 			for (u32 i = 0; i < N; i++)
 				data[i] -= t;
 			return *this;
 		}
-		vec &operator*=(T &t)
+		vec &operator*=(const T &t)
 		{
 			for (u32 i = 0; i < N; i++)
 				data[i] *= t;
 			return *this;
 		}
-		vec &operator/=(T &t)
+		vec &operator/=(const T &t)
 		{
 			if (t == T(0))
 				return vec();
@@ -1160,7 +1180,7 @@ namespace sp
 		}
 		mat<T> to_mat() const
 		{
-			mat<T> m(1, N);
+			mat<T> m(N, 1);
 			for (u32 i = 0; i < N; i++)
 				m.data[i] = data[i];
 			return m;
@@ -1234,7 +1254,7 @@ namespace sp
 	vec<T, N> operator*(const vec<T, N> &v, const mat<T> &m)
 	{
 		mat<T> m1 = v.to_mat();
-		m1 = m1 * m;
+		m1 = m1.transpose() * m;
 		if (m1.row == 0 && m1.col == 0)
 			return vec<T, N>();
 		vec<T, N> o;
@@ -1247,7 +1267,7 @@ namespace sp
 	vec<T, N> operator*(const mat<T> &m, const vec<T, N> &v)
 	{
 		mat<T> m1 = v.to_mat();
-		m1 = m1 * m;
+		m1 = m * m1;
 		if (m1.row == 0 && m1.col == 0)
 			return vec<T, N>();
 		vec<T, N> o;
@@ -1335,7 +1355,6 @@ namespace sp
 			}
 			return vs.unique();
 		}
-
 
 		mat<f32> adj_mat() const
 		{
@@ -1475,17 +1494,14 @@ namespace sp
 		using ptr_type = value_type *;
 		using ref_type = value_type &;
 
-
-
 		graph *gp;
 		u32 root;
 		buffer<u32> verts_to_visit;
 		set<u32> verts_visited;
 
 	public:
-		bfs_iterator(): gp(nullptr), root(0), verts_to_visit(buffer<u32>()), verts_visited({})
+		bfs_iterator() : gp(nullptr), root(0), verts_to_visit(buffer<u32>()), verts_visited({})
 		{
-
 		}
 		bfs_iterator(graph *g, u32 r) : gp(g), root(r), verts_to_visit(buffer<u32>()), verts_visited({})
 		{
@@ -1513,7 +1529,7 @@ namespace sp
 			for (const u32 &v : vs0)
 				if (verts_visited.count(v) == 0 && verts_to_visit.indexOf(v) == -1)
 					verts_to_visit.push(v);
-			if(verts_to_visit.len)
+			if (verts_to_visit.len)
 			{
 
 				root = verts_to_visit.front();
@@ -1563,5 +1579,81 @@ namespace sp
 		return os;
 	}
 
+	inline matrix translation_matrix(f32 x, f32 y, f32 z)
+		{
+			mat<float> m = {
+					{1, 0, 0, x},
+					{0, 1, 0, y},
+					{0, 0, 1, z},
+					{0, 0, 0, 1}};
+			return m;
+		}
+		inline matrix scale_matrix(f32 x, f32 y, f32 z)
+		{
+			mat<float> m = {
+					{x, 0, 0, 0},
+					{0, y, 0, 0},
+					{0, 0, z, 0},
+					{0, 0, 0, 1}};
+			return m;
+		}
+		inline matrix rotation_matrix(f32 x, f32 y, f32 z, f32 angle)
+		{
+			f32 l = sqrt(x * x + y * y + z * z);
+			x /= l;
+			y /= l;
+			z /= l;
+			f32 s = sin(angle);
+			f32 c = cos(angle);
+
+			mat<float> m = {
+					{(c + x * x * (1 - c)), (x * y * (1 - c) - z * s), (x * z * (1 - c) + y * s), 0},
+					{(y * x * (1 - c) + z * s), (c + y * y * (1 - c)), (y * z * (1 - c) - x * s), 0},
+					{(z * x * (1 - x) - y * s), (z * y * (1 - c) + x * s), (c + z * z * (1 - c)), 0},
+					{0, 0, 0, 1}};
+			return m;
+		}
+
+	inline matrix perspective_projection_matrix(f32 fov, f32 width, f32 height, f32 near = 0.1f, f32 far = 100.0f)
+	{
+		f32 aspect = width / height;
+		f32 f1 = tan(pi * 0.5 - 0.5 * fov);
+		f32 rangeInv = (1.0f / (near - far));
+
+		matrix m = {
+				{f1 / aspect, 0, 0, 0},
+				{0, f1, 0, 0},
+				{0, 0, (near + far) * rangeInv, near * far * rangeInv * 2},
+				{0, 0, -1, 0}};
+		return m;
+	}
+	inline matrix orthogonal_projection_matrix(f32 left, f32 top, f32 right, f32 bottom, f32 near = 0.1f, f32 far = 10.0f)
+	{
+		matrix m = {
+				{2.0f / (right - left), 0.0f, 0.0f, -(right + left) / (right - left)},
+				{0.0f, 2.0f / (top - bottom), 0.0f, -(top + bottom) / (top - bottom)},
+				{0.0f, 0.0f, -2.0f / (far - near), -(far + near) / (far - near)},
+				{0.0f, 0.0f, 0.0f, 1.0f}};
+		return m;
+	}
+
+	inline matrix look_at_matrix(vec3 pos, vec3 target_pos,  vec3 up)
+	{
+
+		vec3 zaxis = pos - target_pos;
+		zaxis.norm();
+		vec3 xaxis = up.cross(zaxis);
+		xaxis.norm();
+		vec3 yaxis = zaxis.cross(xaxis);
+		yaxis.norm();
+
+		matrix m = {
+				{xaxis[0], yaxis[0], zaxis[0], pos[0]},
+				{xaxis[1], yaxis[1], zaxis[1], pos[1]},
+				{xaxis[1], yaxis[1], zaxis[1], pos[1]},
+				{0, 0, 0, 1}};
+
+		return m;
+	}
 
 }; // namespace sp

@@ -19,6 +19,7 @@ namespace sp {
 	uniform float u_aspect;
 	
 	uniform mat4 u_projectionMatrix;
+
 	uniform mat4 u_viewMatrix;
 
 	const float pi = 3.14159;
@@ -41,7 +42,7 @@ namespace sp {
 	void main()
 	{
 		vec4 pos = vec4(position, 0.0, 1.0);
-		pos.x /= u_aspect;
+		
 		
 		pos[0] = pos[0] * rect[2] ;
 		pos[1] = pos[1] * rect[3] ;

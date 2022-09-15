@@ -626,7 +626,7 @@ namespace sp
 
 		void Uniform(const matrix &m, const std::string &name)
 		{
-			glUniformMatrix4fv(GetUniformLocation(name), 1, GL_TRUE, (const GLfloat *)m.data.data);
+			glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, (const GLfloat *)m.data.data);
 		}
 		void Uniform(const vec4 &v, const std::string &name)
 		{
@@ -953,9 +953,9 @@ namespace sp
 			vao = vbo = ebo = ibo = 0;
 		}
 
-		void set_projection(float l, float t, float b, float r)
+		void set_projection(float l, float t, float r, float b)
 		{
-			projectionMatrix = orthogonal_projection_matrix(l, t, b, r);
+			projectionMatrix = orthogonal_projection_matrix(l, t, r, b);
 
 			width = abs(r - l);
 			height = abs(t - b);
@@ -1053,6 +1053,7 @@ namespace sp
 		string fontfamily = "default";
 		u32 fontsize = 20;
 		u8 origin = PEN_ORIGIN_CENTER;
+		u8 canvas = PEN_CANVAS_CENTER; 
 		u32 textstyle = 0;
 		float textoutline = 0.1;
 
@@ -1085,10 +1086,20 @@ namespace sp
 				tids[k++] = textures[i]->id;
 			for (u32 i = 0; i < font_textures.len; i++)
 				tids[k++] = font_textures[i]->id;
-			float px = width / 2;
-			float py = height / 2;
-			spr->set_projection(-px, py, px, -py);
-			spr->begin(*sdr, tids);
+			if(canvas)
+			{
+				float px = (float)width / 2.0;
+				float py = (float)height / 2.0;
+				spr->set_projection(-px, py, px, -py);
+				spr->begin(*sdr, tids);
+			}
+			else
+			{
+				float w = width;
+				float h = height;
+				spr->set_projection(0, 0, w, h);
+				spr->begin(*sdr, tids);
+			}
 		}
 		void pen_up()
 		{
@@ -1263,6 +1274,7 @@ namespace sp
 			fontdata &f = fonts[fontfamily];
 	
 			vec2 cursor = pos;
+			cursor[1] -= fontsize;
 			for (u32 i = 0; i < text.length(); i++)
 			{
 				char c = text[i];

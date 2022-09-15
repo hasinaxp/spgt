@@ -13,6 +13,27 @@
 #include <cassert>
 #include <string>
 #include <memory>
+#include <functional>
+
+#define sp_range(n) for(uint32_t i = 0; i < n; i++)
+#define sp_invrange(n) for(int i=(n)-1;i>=0;i--) 
+#define sp_range2d(Y1,X1,Y2,X2) for(uint32_t y = Y1; y < Y2; y++) for(uint32_t x = X1; x < X2; x++)
+#define sp_for(v, c) for( auto & v : c)
+
+#define sp_bitset(n,b) ( (n >> b) & 1) 
+#define sp_bitget(b) (1 << b)
+#define sp_bitcount(n) __builtin_popcount(n)
+#define sp_first_bit_index(n) __builtin_ctz(n) // count trailing zeros 
+#define sp_last_bit_index(n)  __builtin_clz(n) // count leading zeros  
+
+#define sp_inrange(i,l,r) ( l<i && i<r )
+#define sp_in(c,x) ((c).find(x) != (c).end())
+
+
+#define sp_debug(x) std::cout<<#x<<"="<<x<<"\n";
+#define sp_debug2(x,y) std::cout<<#x<<"="<<x<<"  "<<#y<<"="<<y<<"\n"; 
+#define sp_debug3(x,y,z) std::cout<<#x<<"="<<x<<"  "<<#y<<"="<<y<<"  "<<#z<<"="<<z<<"\n"; 
+
 
 namespace sp
 {
@@ -28,9 +49,16 @@ namespace sp
 	typedef float f32;
 	typedef double f64;
 
-	constexpr f32 pi = 3.14159;
+	constexpr f32 pi = 3.14159265f;
 	constexpr f32 rad = pi / 180.0;
 	constexpr f32 deg = 180.0 / pi;
+	namespace sym {
+		constexpr f32 pi = 3.14159265f;
+		constexpr f32 e = 2.7182818f;
+		constexpr f32 r2 = 1.414213f;
+		constexpr f32 r3 = 1.73205f;
+
+	};
 
 	template <class>
 	class buffer_iterator;
@@ -132,6 +160,13 @@ namespace sp
 		{
 			return itr(this, len);
 		}
+		itr find(T t)
+		{
+			for(u32 i = off; i < len; i++)
+				if(data[index(i)] == t)
+					return itr(this, i);
+				return itr(this, len);
+		}
 
 		void clear()
 		{
@@ -142,7 +177,6 @@ namespace sp
 			}
 			cap = len = off = 0;
 		}
-
 		T *array(u32 &n)
 		{
 			T *arr = new T[len];
@@ -150,7 +184,6 @@ namespace sp
 				arr[i] = data[index(i)];
 			return arr;
 		}
-
 		void push(const T &t)
 		{
 			check(len + 1);
@@ -840,6 +873,16 @@ namespace sp
 		}
 
 		mat map(T (*func)(const T &t))
+		{
+			mat o(row, col);
+			for (u32 i = 0; i < row * col; i++)
+			{
+				o.data[i] = func(data[i]);
+			}
+			return o;
+		}
+
+		mat map(function<T(const T&)> func)
 		{
 			mat o(row, col);
 			for (u32 i = 0; i < row * col; i++)
@@ -1640,6 +1683,7 @@ namespace sp
 	}
 	inline matrix orthogonal_projection_matrix(f32 left, f32 top, f32 right, f32 bottom, f32 near = -110.0f, f32 far = 10.0f)
 	{
+		printf("%f %f %f %f\n", left, top, right, bottom);
 		matrix m = {
 				{2.0f / (right - left), 0.0f, 0.0f, -(right + left) / (right - left)},
 				{0.0f, 2.0f / (top - bottom), 0.0f, -(top + bottom) / (top - bottom)},

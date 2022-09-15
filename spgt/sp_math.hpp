@@ -14,25 +14,27 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <random>
 
+#define sp_rng(i,n) for(uint32_t i = 0; i < n; i++)
 #define sp_range(n) for(uint32_t i = 0; i < n; i++)
-#define sp_invrange(n) for(int i=(n)-1;i>=0;i--) 
+#define sp_invrange(n) for(int i=(n)-1;i>=0;i--)
 #define sp_range2d(Y1,X1,Y2,X2) for(uint32_t y = Y1; y < Y2; y++) for(uint32_t x = X1; x < X2; x++)
 #define sp_for(v, c) for( auto & v : c)
 
-#define sp_bitset(n,b) ( (n >> b) & 1) 
+#define sp_bitset(n,b) ( (n >> b) & 1)
 #define sp_bitget(b) (1 << b)
 #define sp_bitcount(n) __builtin_popcount(n)
-#define sp_first_bit_index(n) __builtin_ctz(n) // count trailing zeros 
-#define sp_last_bit_index(n)  __builtin_clz(n) // count leading zeros  
+#define sp_first_bit_index(n) __builtin_ctz(n) // count trailing zeros
+#define sp_last_bit_index(n)  __builtin_clz(n) // count leading zeros
 
 #define sp_inrange(i,l,r) ( l<i && i<r )
 #define sp_in(c,x) ((c).find(x) != (c).end())
 
 
 #define sp_debug(x) std::cout<<#x<<"="<<x<<"\n";
-#define sp_debug2(x,y) std::cout<<#x<<"="<<x<<"  "<<#y<<"="<<y<<"\n"; 
-#define sp_debug3(x,y,z) std::cout<<#x<<"="<<x<<"  "<<#y<<"="<<y<<"  "<<#z<<"="<<z<<"\n"; 
+#define sp_debug2(x,y) std::cout<<#x<<"="<<x<<"  "<<#y<<"="<<y<<"\n";
+#define sp_debug3(x,y,z) std::cout<<#x<<"="<<x<<"  "<<#y<<"="<<y<<"  "<<#z<<"="<<z<<"\n";
 
 
 namespace sp
@@ -59,6 +61,18 @@ namespace sp
 		constexpr f32 r3 = 1.73205f;
 
 	};
+
+	namespace rnd {
+
+			static default_random_engine sp_random_engine;
+			static uniform_real_distribution<f32> sp_uniform_real_dist(0,1.0);
+
+			inline f32 uniform()
+			{
+				return sp_uniform_real_dist(sp_random_engine);
+			}
+	};
+
 
 	template <class>
 	class buffer_iterator;
@@ -88,6 +102,14 @@ namespace sp
 		buffer(u32 n) : len(n), off(0), cap(n), data(nullptr)
 		{
 			data = new T[cap];
+		};
+		buffer(u32 n, T* dataarr) : len(n), off(0), cap(n), data(nullptr)
+		{
+			data = new T[cap];
+			sp_range(n)
+			{
+				data[i] = dataarr{i};
+			}
 		};
 		buffer(const buffer &b) : len(b.len), off(b.off), cap(b.cap), data(nullptr)
 		{
@@ -596,6 +618,10 @@ namespace sp
 		mat() : data(buffer<T>()), row(0), col(0)
 		{
 		}
+		mat(u32 r, u32 c, T* values): row(r), col(c), data(buffer<T>(r * c, values))
+		{
+
+		}
 		mat(u32 R, u32 C, bool identity = true) : data(buffer<T>(R * C)), row(R), col(C)
 		{
 			u32 off = 0;
@@ -892,6 +918,26 @@ namespace sp
 			return o;
 		}
 
+		void apply(function<T(const T&)> func)
+		{
+			for (u32 i = 0; i < row * col; i++)
+			{
+				data[i] = func(data[i]);
+			}
+			
+		}
+
+		mat multiply_elements(const mat & m)
+		{
+			mat o(col, row);
+			for (u32 y = 0; y < row; y++)
+				for (u32 x = 0; x < col; x++)
+				{
+					o.data[x * row + y] = m.data[y * col + x] * data[y * col + x];
+				}
+			return o;
+		}
+
 		mat transpose() const
 		{
 			mat o(col, row);
@@ -967,7 +1013,7 @@ namespace sp
 				}
 			return adj;
 		}
-		
+
 	};
 
 	inline mat<float> mat4_identity()
@@ -1678,7 +1724,7 @@ namespace sp
 				{0, f1, 0, 0},
 				{0, 0, (near + far) * rangeInv, near * far * rangeInv * 2},
 				{0, 0, -1, 0}};
-			
+
 		return m;
 	}
 	inline matrix orthogonal_projection_matrix(f32 left, f32 top, f32 right, f32 bottom, f32 near = -110.0f, f32 far = 10.0f)
@@ -1695,7 +1741,7 @@ namespace sp
 		// 		{0.0f, 2.0f / (bottom - top), 0.0f, 0.0f},
 		// 		{0.0f, 0.0f, -2.0f / (far - near), 0.0f},
 		// 		{-(right + left) / (right - left),  -(top + bottom) / (top - bottom), -(far + near) / (far - near), 1.0f}};
-	
+
 		return m;
 	}
 
